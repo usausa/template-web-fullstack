@@ -1,1 +1,1 @@
-# template-web-fullstack
+# template-web-mvc
