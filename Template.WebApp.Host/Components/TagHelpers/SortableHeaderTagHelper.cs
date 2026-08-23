@@ -35,8 +35,10 @@ public sealed class SortableHeaderTagHelper : TagHelper
 
         var childContent = await output.GetChildContentAsync();
 
-        var anchor = new TagBuilder("a");
-        anchor.Attributes["href"] = query.ToString();
+        var anchor = new TagBuilder("a")
+        {
+            Attributes = { ["href"] = query.ToString() }
+        };
         anchor.AddCssClass("text-decoration-none text-reset");
         anchor.InnerHtml.AppendHtml(childContent);
         if (active)

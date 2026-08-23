@@ -34,3 +34,12 @@
         </div>
     </div>
 </div>
+
+@if ((bool?)ViewData["FeatureCustomOption"] == true)
+{
+    <div class="row mt-3">
+        <div class="col-sm-4">
+            <span class="badge bg-success">Feature: CustomOption 有効</span>
+        </div>
+    </div>
+}

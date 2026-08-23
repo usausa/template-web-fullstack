@@ -58,6 +58,7 @@ public sealed class PagedTest
     private static Paged<int> CreatePaged(int page, int size, int itemCount, int total)
     {
         var pageable = new TestCondition { Page = page, Size = size };
+        // ReSharper disable once UseCollectionExpression
         return new Paged<int>(pageable, Enumerable.Range(0, itemCount).ToList(), total);
     }
 

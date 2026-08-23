@@ -44,8 +44,7 @@ public sealed class DirtyTagHelperTest
 
     private static ViewContext CreateViewContext(string method)
     {
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Method = method;
+        var httpContext = new DefaultHttpContext { Request = { Method = method } };
         return new ViewContext
         {
             HttpContext = httpContext

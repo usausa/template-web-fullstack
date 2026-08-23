@@ -25,6 +25,7 @@ public sealed class DataUsecase
     {
         var count = await dataService.CountAsync(name);
         var items = await dataService.QueryPageAsync(name, sort, desc, pageable.Offset, pageable.Size);
+        // ReSharper disable once UseCollectionExpression
         return new Paged<DataEntity>(pageable, items, count);
     }
 }

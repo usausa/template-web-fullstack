@@ -1,6 +1,7 @@
 namespace Template.WebApp.Host.Areas.Api.Controllers;
 
 using Template.WebApp.Host.Areas.Api.Models;
+using Template.WebApp.Host.Mappers;
 
 public sealed class DataController : BaseApiController
 {
@@ -28,16 +29,17 @@ public sealed class DataController : BaseApiController
         [FromQuery][Range(1, 100)] int size = 20)
     {
         var result = await DataUsecase.QueryPageAsync(name, page, size);
-        return Ok(new DataListResponse(result.Total, result.Page, result.Size, result.Items.Select(MapToResponse).ToList()));
+        return Ok(new DataListResponse(result.Total, result.Page, result.Size, result.Items.Select(DataMapper.ToResponse).ToList()));
     }
 
+    // ReSharper disable once RouteTemplates.RouteTokenNotResolved
     [HttpGet("~/[area]/[controller]/[action]/{id:long}")]
     [ProducesResponseType<DataResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async ValueTask<IActionResult> Get(long id)
     {
         var entity = await DataService.QueryAsync(id);
-        return entity is not null ? Ok(MapToResponse(entity)) : NotFound();
+        return entity is not null ? Ok(DataMapper.ToResponse(entity)) : NotFound();
     }
 
     //--------------------------------------------------------------------------------
@@ -58,6 +60,7 @@ public sealed class DataController : BaseApiController
         return CreatedAtAction(nameof(Get), new { id = id.Value }, new DataCreateResponse(id.Value));
     }
 
+    // ReSharper disable once RouteTemplates.RouteTokenNotResolved
     [HttpPost("~/[area]/[controller]/[action]/{id:long}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -73,6 +76,7 @@ public sealed class DataController : BaseApiController
         };
     }
 
+    // ReSharper disable once RouteTemplates.RouteTokenNotResolved
     [HttpPost("~/[area]/[controller]/[action]/{id:long}")]
     [Authorize(Policy = Policies.Administrator)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -81,11 +85,4 @@ public sealed class DataController : BaseApiController
     {
         return await DataService.DeleteAsync(id) ? NoContent() : NotFound();
     }
-
-    //--------------------------------------------------------------------------------
-    // Mapper
-    //--------------------------------------------------------------------------------
-
-    private static DataResponse MapToResponse(DataEntity entity) =>
-        new(entity.Id, entity.Name, entity.Value, entity.CreatedAt);
 }

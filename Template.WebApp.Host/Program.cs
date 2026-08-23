@@ -1,7 +1,5 @@
 using Microsoft.Extensions.Hosting.WindowsServices;
 
-using Template.WebApp.Host.Application;
-
 //--------------------------------------------------------------------------------
 // Configure builder
 //--------------------------------------------------------------------------------
