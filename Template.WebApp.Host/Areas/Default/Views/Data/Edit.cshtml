@@ -1,0 +1,37 @@
+@model DataEditForm
+@{
+    ViewData.SetTitle("データ編集");
+}
+
+<h4 class="mb-3">データ編集</h4>
+
+<app-validation-summary></app-validation-summary>
+
+<form method="post" class="dirty-behavior" i-dirty="false">
+    <div class="row mb-3">
+        <label asp-for="Name" class="col-form-label col-sm-2">名前</label>
+        <div class="col-sm-4">
+            <input type="text" asp-for="Name" class="form-control" maxlength="@Length.Name" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <label asp-for="Value" class="col-form-label col-sm-2">値</label>
+        <div class="col-sm-4">
+            <input type="number" asp-for="Value" class="form-control" />
+            <span asp-validation-for="Value" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="mb-3">
+        <button type="submit" class="btn btn-primary">更新</button>
+        <a asp-action="List" class="btn btn-secondary">戻る</a>
+    </div>
+</form>
+
+<form if="User.IsAdministrator()" asp-action="Delete" asp-route-id='@ViewContext.RouteData.Values["id"]' method="post" onsubmit="return confirm('データを削除します。よろしいですか?')">
+    <button type="submit" class="btn btn-danger">削除</button>
+</form>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

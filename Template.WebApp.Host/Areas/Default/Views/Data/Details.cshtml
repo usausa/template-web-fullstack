@@ -1,0 +1,22 @@
+@model DataEntity
+@{
+    ViewData.SetTitle("データ詳細");
+}
+
+<h4 class="mb-3">データ詳細</h4>
+
+<dl class="row">
+    <dt class="col-sm-2">ID</dt>
+    <dd class="col-sm-10">@Model.Id</dd>
+    <dt class="col-sm-2">名前</dt>
+    <dd class="col-sm-10">@Model.Name</dd>
+    <dt class="col-sm-2">値</dt>
+    <dd class="col-sm-10">@Model.Value</dd>
+    <dt class="col-sm-2">作成日時</dt>
+    <dd class="col-sm-10">@Model.CreatedAt.DateTime()</dd>
+</dl>
+
+<div class="mb-3">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">編集</a>
+    <a asp-action="List" class="btn btn-secondary">一覧へ</a>
+</div>

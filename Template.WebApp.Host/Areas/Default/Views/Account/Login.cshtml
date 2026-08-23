@@ -1,0 +1,40 @@
+@model AccountLoginForm
+@{
+    Layout = "_LayoutSimple";
+    ViewData.SetTitle("ログイン");
+}
+
+<div class="d-flex justify-content-center">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">ログイン</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-antiforgery="true">
+                <div class="row mb-3">
+                    <label asp-for="Name" class="col-form-label col-md-4">ID</label>
+                    <div class="col-md-8">
+                        <input type="text" asp-for="Name" class="form-control" maxlength="@Length.Name" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label asp-for="Password" class="col-form-label col-md-4">パスワード</label>
+                    <div class="col-md-8">
+                        <input type="password" asp-for="Password" class="form-control" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="row mb-0">
+                    <div class="col-md-12 text-center">
+                        <button type="submit" class="btn btn-primary">ログイン</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

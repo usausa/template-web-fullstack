@@ -1,0 +1,52 @@
+namespace Template.WebApp;
+
+public sealed class HostTest : IClassFixture<TestApplicationFactory>
+{
+    private readonly TestApplicationFactory factory;
+
+    public HostTest(TestApplicationFactory factory)
+    {
+        this.factory = factory;
+    }
+
+    [Fact]
+    public async Task HealthReturnsOk()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(new Uri("/health", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task RootWithoutAuthShowsLoginPage()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(new Uri("/", UriKind.Relative), TestContext.Current.CancellationToken);
+        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        Assert.Contains("ログイン", content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ApiWithoutAuthReturnsUnauthorized()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(new Uri("/api/data/list", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+}

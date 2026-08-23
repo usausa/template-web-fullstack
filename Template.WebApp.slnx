@@ -1,0 +1,29 @@
+<Solution>
+  <Folder Name="/Aspire/">
+    <Project Path="Template.WebApp.AppHost/Template.WebApp.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/Application/">
+    <Project Path="Template.WebApp.Core/Template.WebApp.Core.csproj" />
+    <Project Path="Template.WebApp.Host/Template.WebApp.Host.csproj" />
+  </Folder>
+  <Folder Name="/Test/">
+    <Project Path="Template.WebApp.UnitTests/Template.WebApp.UnitTests.csproj" />
+    <Project Path="Template.WebApp.IntegrationTests/Template.WebApp.IntegrationTests.csproj" />
+    <Project Path="Template.WebApp.E2ETests/Template.WebApp.E2ETests.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="AGENTS.md" />
+    <File Path="Analyzers.ruleset" />
+    <File Path="CodeCoverage.runsettings" />
+    <File Path="Database.sql" />
+    <File Path="Database.Sample.sql" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="Template.WebApp.sln.DotSettings" />
+  </Folder>
+</Solution>

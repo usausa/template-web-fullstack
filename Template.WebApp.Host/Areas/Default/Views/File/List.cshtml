@@ -1,0 +1,40 @@
+@model string[]
+@{
+    ViewData.SetTitle("ファイル");
+}
+
+<h4 class="mb-3">ファイル</h4>
+
+<form method="post" enctype="multipart/form-data" asp-action="Upload">
+    <div class="row g-2 align-items-center mb-3">
+        <div class="col-auto">
+            <input type="file" name="file" class="form-control" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">アップロード</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-sm table-striped table-bordered">
+    <thead>
+    <tr>
+        <th>名前</th>
+        <th class="text-center">操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var entry in Model)
+    {
+        <tr>
+            <td>@entry</td>
+            <td class="text-center">
+                <a asp-action="Download" asp-route-path="@entry" class="btn btn-sm btn-outline-secondary">ダウンロード</a>
+                <form if="User.IsAdministrator()" asp-action="Delete" asp-route-path="@entry" method="post" class="d-inline" onsubmit="return confirm('ファイルを削除します。よろしいですか?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">削除</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

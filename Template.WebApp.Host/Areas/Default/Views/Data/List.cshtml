@@ -1,0 +1,58 @@
+@model DataListCondition
+@{
+    ViewData.SetTitle("データ一覧");
+
+    Paged<DataEntity>? paged = ViewBag.Paged;
+}
+
+<form method="get">
+    <input type="hidden" name="Go" value="true" />
+    <div class="row g-2 align-items-end mb-3">
+        <div class="col-auto">
+            <label asp-for="Name" class="form-label">名前</label>
+            <input type="text" asp-for="Name" class="form-control" maxlength="@Length.Name" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">検索</button>
+        </div>
+        <div class="col-auto ms-auto">
+            <a href="@(Url.Action("Export") + ViewContext.HttpContext.Request.QueryString)" class="btn btn-outline-secondary">CSV</a>
+            <a asp-action="Invoice" class="btn btn-outline-secondary">請求書PDF</a>
+            <a asp-action="Create" class="btn btn-success">新規作成</a>
+        </div>
+    </div>
+</form>
+
+@if (paged is not null)
+{
+    <table class="table table-sm table-striped table-bordered mb-1">
+        <thead>
+        <tr>
+            <th class="text-end" sort-for="Id">ID</th>
+            <th sort-for="Name">名前</th>
+            <th class="text-end" sort-for="Value">値</th>
+            <th sort-for="CreatedAt">作成日時</th>
+            <th class="text-center">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var entry in paged)
+        {
+            <tr>
+                <td class="text-end">@entry.Id</td>
+                <td>@entry.Name</td>
+                <td class="text-end">@entry.Value</td>
+                <td>@entry.CreatedAt.DateTime()</td>
+                <td class="text-center">
+                    <a asp-action="Details" asp-route-id="@entry.Id" class="btn btn-sm btn-outline-secondary">詳細</a>
+                    <a asp-action="Edit" asp-route-id="@entry.Id" class="btn btn-sm btn-outline-primary">編集</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="text-center">
+        @await Html.PartialAsync("_Pager", paged)
+    </div>
+}

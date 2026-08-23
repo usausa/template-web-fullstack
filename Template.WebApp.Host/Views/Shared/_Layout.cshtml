@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData.GetTitle() - テンプレート</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-light bg-light border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="default" asp-controller="Dashboard" asp-action="Index">テンプレート</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item @ViewContext.IsControllerActive("Default", "Data").Active()">
+                            <a class="nav-link" asp-area="default" asp-controller="Data" asp-action="List">データ</a>
+                        </li>
+                        <li class="nav-item @ViewContext.IsControllerActive("Default", "File").Active()">
+                            <a class="nav-link" asp-area="default" asp-controller="File" asp-action="List">ファイル</a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li if="!User.IsAuthenticated()" class="nav-item">
+                            <a class="nav-link" asp-area="default" asp-controller="Account" asp-action="Login">ログイン</a>
+                        </li>
+                        <li if="User.IsAuthenticated()" class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button">@User.Identity!.Name</a>
+                            <div class="dropdown-menu dropdown-menu-end" role="menu">
+                                <form asp-area="default" asp-controller="Account" asp-action="Logout" method="post">
+                                    <button type="submit" class="dropdown-item">ログアウト</button>
+                                </form>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container-fluid">
+        <main role="main">
+            <app-message></app-message>
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container-fluid">
+            &copy; 2026 - テンプレート
+        </div>
+    </footer>
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

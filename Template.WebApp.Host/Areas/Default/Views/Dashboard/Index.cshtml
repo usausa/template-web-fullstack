@@ -1,0 +1,36 @@
+@{
+    ViewData.SetTitle("ダッシュボード");
+}
+
+<div class="row">
+    <div class="col-sm-4">
+        <div class="card shadow-sm">
+            <div class="card-header p-1 text-center">
+                <h4 class="m-0">一覧画面</h4>
+            </div>
+            <div class="card-body pt-1 pb-1">
+                <ul class="list-unstyled mb-0">
+                    <li><a asp-area="default" asp-controller="Data" asp-action="List">データ一覧(検索/CRUD/CSV/PDF)</a></li>
+                    <li><a asp-area="default" asp-controller="File" asp-action="List">ファイル(アップロード/ダウンロード)</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card shadow-sm">
+            <div class="card-header p-1 text-center">
+                <h4 class="m-0">その他</h4>
+            </div>
+            <div class="card-body pt-1 pb-1">
+                <ul class="list-unstyled mb-0">
+                    @* ReSharper disable Html.PathError *@
+                    <li><a href="/swagger">Swagger UI</a></li>
+                    <li><a href="/redoc">ReDoc</a></li>
+                    <li><a href="/health">Health check</a></li>
+                    <li><a href="/alive">Aliveness</a></li>
+                    @* ReSharper restore Html.PathError *@
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
