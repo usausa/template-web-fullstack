@@ -11,7 +11,7 @@ public sealed class DataCrudTest : PageTest
     public async Task CreateDataShowsInList()
     {
         // Arrange
-        using var factory = new E2EApplicationFactory();
+        await using var factory = new E2EApplicationFactory();
         factory.UseKestrel(0);
         factory.StartServer();
 

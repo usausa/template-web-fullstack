@@ -11,7 +11,7 @@ public sealed class LoginTest : PageTest
     public async Task LoginShowsDashboardPage()
     {
         // Arrange
-        using var factory = new E2EApplicationFactory();
+        await using var factory = new E2EApplicationFactory();
         factory.UseKestrel(0);
         factory.StartServer();
 
@@ -31,7 +31,7 @@ public sealed class LoginTest : PageTest
     public async Task LoginWithWrongPasswordShowsError()
     {
         // Arrange
-        using var factory = new E2EApplicationFactory();
+        await using var factory = new E2EApplicationFactory();
         factory.UseKestrel(0);
         factory.StartServer();
 
