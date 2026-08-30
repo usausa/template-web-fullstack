@@ -25,6 +25,8 @@ builder.ConfigureHttp();
 builder.ConfigureApi();
 // Authentication
 builder.ConfigureAuthentication();
+// Compress
+builder.ConfigureCompression();
 // OpenApi
 builder.ConfigureOpenApi();
 
@@ -52,6 +54,9 @@ app.UseForwardedHeaders();
 
 // Error handler
 app.UseErrorHandler();
+
+// Compression
+app.UseCompression();
 
 // Logging
 app.UseLogging();

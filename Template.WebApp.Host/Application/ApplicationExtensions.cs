@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.FeatureManagement;
@@ -249,6 +250,29 @@ public static class ApplicationExtensions
         });
 
         return builder;
+    }
+
+    //--------------------------------------------------------------------------------
+    // Compress
+    //--------------------------------------------------------------------------------
+
+    public static IHostApplicationBuilder ConfigureCompression(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddResponseCompression(static options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
+
+        return builder;
+    }
+
+    public static WebApplication UseCompression(this WebApplication app)
+    {
+        app.UseResponseCompression();
+
+        return app;
     }
 
     //--------------------------------------------------------------------------------
