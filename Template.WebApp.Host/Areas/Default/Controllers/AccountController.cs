@@ -1,9 +1,12 @@
+#pragma warning disable CA1716
 namespace Template.WebApp.Host.Areas.Default.Controllers;
+#pragma warning restore CA1716
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 using Template.WebApp.Host.Areas.Default.Models;
 
+#pragma warning disable CA1054
 [AllowAnonymous]
 public sealed class AccountController : BaseDefaultController
 {
@@ -56,3 +59,4 @@ public sealed class AccountController : BaseDefaultController
         return RedirectToAction(nameof(Login));
     }
 }
+#pragma warning restore CA1054
