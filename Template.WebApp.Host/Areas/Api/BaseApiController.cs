@@ -4,6 +4,4 @@ namespace Template.WebApp.Host.Areas.Api;
 [Route("[area]/[controller]/[action]")]
 [ApiController]
 [Authorize]
-public abstract class BaseApiController : ControllerBase
-{
-}
+public abstract class BaseApiController : ControllerBase;

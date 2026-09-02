@@ -62,7 +62,5 @@ public sealed class PagedTest
         return new Paged<int>(pageable, Enumerable.Range(0, itemCount).ToList(), total);
     }
 
-    private sealed class TestCondition : Pageable
-    {
-    }
+    private sealed class TestCondition : Pageable;
 }
