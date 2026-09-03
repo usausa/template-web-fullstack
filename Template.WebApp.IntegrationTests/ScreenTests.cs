@@ -2,11 +2,11 @@ namespace Template.WebApp;
 
 using AngleSharp.Html.Parser;
 
-public sealed class ScreenTest : IClassFixture<TestApplicationFactory>
+public sealed class ScreenTests : IClassFixture<TestApplicationFactory>
 {
     private readonly TestApplicationFactory factory;
 
-    public ScreenTest(TestApplicationFactory factory)
+    public ScreenTests(TestApplicationFactory factory)
     {
         this.factory = factory;
     }

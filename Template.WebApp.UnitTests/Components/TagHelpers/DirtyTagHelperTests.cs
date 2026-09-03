@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 
 using Template.WebApp.Host.Components.TagHelpers;
 
-public sealed class DirtyTagHelperTest
+public sealed class DirtyTagHelperTests
 {
     [Fact]
     public void ProcessOnGetOutputsFalse()

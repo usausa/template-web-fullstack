@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using Microsoft.Playwright.Xunit.v3;
 
-public sealed class LoginTest : PageTest
+public sealed class LoginTests : PageTest
 {
     [Fact]
     public async Task LoginShowsDashboardPage()

@@ -1,6 +1,6 @@
 namespace Template.WebApp.Models.Paging;
 
-public sealed class PagedTest
+public sealed class PagedTests
 {
     [Fact]
     public void FirstPageHasNoPrev()

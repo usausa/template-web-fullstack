@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using Microsoft.Playwright.Xunit.v3;
 
-public sealed class DataCrudTest : PageTest
+public sealed class DataCrudTests : PageTest
 {
     [Fact]
     public async Task CreateDataShowsInList()
