@@ -7,13 +7,13 @@ public sealed partial class DataAccessor
     public partial void Create();
 
     [ExecuteScalar]
-    public partial ValueTask<int> CountAsync(string? name);
+    public partial ValueTask<int> CountAsync(string? name, CancellationToken cancellationToken);
 
     [Query]
-    public partial ValueTask<List<DataEntity>> QueryPageAsync(string? name, string? sort, bool desc, int offset, int size);
+    public partial ValueTask<List<DataEntity>> QueryPageAsync(string? name, string? sort, bool desc, int offset, int size, CancellationToken cancellationToken);
 
     [Query]
-    public partial ValueTask<List<DataEntity>> QueryAllAsync();
+    public partial ValueTask<List<DataEntity>> QueryAllAsync(CancellationToken cancellationToken);
 
     // ReSharper disable once CSharpWarnings::CS8424 (SDA0305がEnumeratorCancellation注釈を要求するため。実装はジェネレータ側で処理される)
     [Query]

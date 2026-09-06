@@ -25,10 +25,11 @@ public sealed class DataController : BaseApiController
     [ProducesResponseType<DataListResponse>(StatusCodes.Status200OK)]
     public async ValueTask<IActionResult> List(
         [FromQuery] string? name,
+        CancellationToken cancellationToken,
         [FromQuery][Range(0, Int32.MaxValue)] int page = 0,
         [FromQuery][Range(1, 100)] int size = 20)
     {
-        var result = await DataUsecase.QueryPageAsync(name, page, size);
+        var result = await DataUsecase.QueryPageAsync(name, page, size, cancellationToken);
         return Ok(new DataListResponse(result.Total, result.Page, result.Size, result.Items.Select(DataMapper.ToResponse).ToList()));
     }
 

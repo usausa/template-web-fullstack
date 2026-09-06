@@ -24,14 +24,14 @@ public sealed class DataService
     public void CreateTable() =>
         dataAccessor.Create();
 
-    public ValueTask<int> CountAsync(string? name) =>
-        dataAccessor.CountAsync(name);
+    public ValueTask<int> CountAsync(string? name, CancellationToken cancellationToken = default) =>
+        dataAccessor.CountAsync(name, cancellationToken);
 
-    public ValueTask<List<DataEntity>> QueryPageAsync(string? name, string? sort, bool desc, int offset, int size) =>
-        dataAccessor.QueryPageAsync(name, sort, desc, offset, size);
+    public ValueTask<List<DataEntity>> QueryPageAsync(string? name, string? sort, bool desc, int offset, int size, CancellationToken cancellationToken = default) =>
+        dataAccessor.QueryPageAsync(name, sort, desc, offset, size, cancellationToken);
 
-    public ValueTask<List<DataEntity>> QueryAllAsync() =>
-        dataAccessor.QueryAllAsync();
+    public ValueTask<List<DataEntity>> QueryAllAsync(CancellationToken cancellationToken = default) =>
+        dataAccessor.QueryAllAsync(cancellationToken);
 
     public IAsyncEnumerable<DataEntity> QueryExportEnumerable(string? name, string? sort, bool desc, CancellationToken cancellationToken) =>
         dataAccessor.QueryExportEnumerable(name, sort, desc, cancellationToken);

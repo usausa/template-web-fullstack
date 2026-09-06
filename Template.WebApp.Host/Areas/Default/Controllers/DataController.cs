@@ -29,13 +29,13 @@ public sealed class DataController : BaseDefaultController
     //--------------------------------------------------------------------------------
 
     [HttpGet]
-    public async ValueTask<IActionResult> List([FromQuery] DataListCondition c)
+    public async ValueTask<IActionResult> List([FromQuery] DataListCondition c, CancellationToken cancellationToken)
     {
         if (!Request.IsInitialRequest() && c.Go && ModelState.IsValid)
         {
             c.Page = Math.Max(c.Page, 1);
 
-            var paged = await DataUsecase.QueryPagedAsync(c.Name, c.Sort, c.Desc, c.SetSize(PageSize));
+            var paged = await DataUsecase.QueryPagedAsync(c.Name, c.Sort, c.Desc, c.SetSize(PageSize), cancellationToken);
             if (paged.IsOver)
             {
                 return RedirectToAction(nameof(List), new { c.Go, c.Name, c.Sort, c.Desc, Page = paged.TotalPage });
@@ -154,10 +154,10 @@ public sealed class DataController : BaseDefaultController
     //--------------------------------------------------------------------------------
 
     [HttpGet]
-    public async ValueTask<IActionResult> Invoice([FromServices] InvoiceReportBuilder reportBuilder)
+    public async ValueTask<IActionResult> Invoice([FromServices] InvoiceReportBuilder reportBuilder, CancellationToken cancellationToken)
     {
         // 帳票生成前にデータ有無を判定(空PDFを作らない)
-        var entities = await DataService.QueryAllAsync();
+        var entities = await DataService.QueryAllAsync(cancellationToken);
         if (entities.Count == 0)
         {
             TempData.SetMessage("出力対象のデータがありません");
