@@ -8,7 +8,7 @@ template-web-api を出発点にした**フルスタック構成のサンプル*
 |---|---|---|
 | API | ✅ | template-web-api と同じ構成。DB のみ PostgreSQL(Npgsql) |
 | PostgreSQL | ✅ | AppHost がコンテナとして起動し、接続文字列を API へ注入する |
-| Redis | 未実装 | 分散キャッシュと出力キャッシュ |
+| Valkey | 未実装 | 分散キャッシュと出力キャッシュ。Redis 互換(BSD-3)。**Redis 本体はライセンス(RSAL / SSPL / AGPL)の理由で使わない** |
 | YARP | 未実装 | 前段のリバースプロキシ |
 | フロントエンド | 未実装 | API の外側に置く要素。候補は Blazor WASM |
 
@@ -44,8 +44,9 @@ DOCKER_HOST=npipe://./pipe/podman-machine-default
 
 API の構造そのものは同じ。**差分は永続化層とオーケストレーションに閉じている**。
 
-## 既知の問題
+## Prometheus のポート
 
-**`dotnet run` で API が起動しない**(2026-09-11 時点)。Prometheus の設定が `http://0.0.0.0:9464` で、Windows の `HttpListener` は `0.0.0.0` への束縛に管理者権限か URL ACL の予約を要求するため、アクセス拒否で起動に失敗する。
+`Prometheus:Uri` は既定 `http://0.0.0.0:9464`(全インターフェース。Linux / コンテナ向け)、Development は `http://localhost:9464`。
 
-**この問題は template-web-api でも同じように起きる**。本テンプレート固有ではない。回避するには `appsettings.Development.json` で `Prometheus:Uri` を空にするか `http://localhost:9464` にする。
+- Windows の http.sys は `0.0.0.0` を受け付けず(エラー 50)、全インターフェースを表す `+` は URI 形式の設定に書けない。Windows で外部から収集させる場合は `http://<マシン名>:9464` を設定し、URL ACL(`netsh http add urlacl url=http://<マシン名>:9464/ user=<user>`)か Windows サービスで束縛する
+- **9464 が Hyper-V / WinNAT の除外ポート範囲に入っているとアクセス拒否で起動しない**。`netsh interface ipv4 show excludedportrange protocol=tcp` で確認し、動的ポート範囲が 1024 始まりなら `netsh int ipv4 set dynamic tcp start=49152 num=16384`(管理者・要再起動)で IANA 既定へ戻す
