@@ -9,7 +9,7 @@ public sealed class HostTests : IClassFixture<TestApplicationFactory>
         this.factory = factory;
     }
 
-    [Fact]
+    [ContainerFact]
     public async Task HealthReturnsOk()
     {
         // Arrange
@@ -22,7 +22,7 @@ public sealed class HostTests : IClassFixture<TestApplicationFactory>
         response.EnsureSuccessStatusCode();
     }
 
-    [Fact]
+    [ContainerFact]
     public async Task AliveReturnsOk()
     {
         // Arrange
@@ -35,7 +35,7 @@ public sealed class HostTests : IClassFixture<TestApplicationFactory>
         response.EnsureSuccessStatusCode();
     }
 
-    [Fact]
+    [ContainerFact]
     public async Task ApiWithoutAuthReturnsUnauthorized()
     {
         // Arrange

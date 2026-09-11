@@ -21,7 +21,7 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
         this.factory = factory;
     }
 
-    [Fact]
+    [ContainerFact]
     public async Task LoginReturnsToken()
     {
         // Arrange
@@ -37,7 +37,7 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
         Assert.False(String.IsNullOrEmpty(body.Token));
     }
 
-    [Fact]
+    [ContainerFact]
     public async Task LoginWithWrongPasswordReturnsUnauthorized()
     {
         // Arrange
@@ -50,7 +50,7 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact]
+    [ContainerFact]
     public async Task DataApiWorksWithToken()
     {
         // Arrange
@@ -75,7 +75,7 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
         Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
     }
 
-    [Fact]
+    [ContainerFact]
     public async Task ApiWorksWithApiKey()
     {
         // Arrange
@@ -89,7 +89,7 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
         response.EnsureSuccessStatusCode();
     }
 
-    [Fact]
+    [ContainerFact]
     public async Task CreateWithInvalidBodyReturnsBadRequest()
     {
         // Arrange
@@ -104,7 +104,8 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
-    [Fact]
+
+    [ContainerFact]
     public async Task DataApiSortsByRequestedColumn()
     {
         // Arrange

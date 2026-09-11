@@ -26,13 +26,18 @@ AppHost が PostgreSQL コンテナを起動し、準備完了を待ってから
 
 データは名前付きボリュームへ残るため、再起動しても消えない。
 
-### Podman を使う場合の環境変数
+### 結合テスト(Testcontainers)
 
-結合テスト(Testcontainers)を動かすときは次を設定する。**PowerShell から設定すること**。Git Bash はパスを変換してしまう。
+結合テストは PostgreSQL コンテナを Testcontainers で起動する。**コンテナランタイム(Docker / Podman)が無い環境では全件スキップ**され、失敗にはならない(CI 向け)。
 
-```
-DOCKER_HOST=npipe://./pipe/podman-machine-default
-```
+| `TEST_CONTAINER` | 動作 |
+|---|---|
+| 未設定 | 自動検出。`DOCKER_HOST` があればそれを使い、無ければ名前付きパイプ `docker_engine` → `podman-machine-default` の順に探す。どちらも無ければスキップ |
+| `docker` | Testcontainers の既定接続(Docker Desktop、または Podman の互換パイプ) |
+| `podman` | `DOCKER_HOST=npipe://./pipe/podman-machine-default` と `TESTCONTAINERS_RYUK_DISABLED=true` をテストプロセス内で設定する |
+| `none` | 実行しない(スキップ) |
+
+Podman machine を起動していれば未設定のままで動く。`DOCKER_HOST` はテストプロセス内で設定するため、Git Bash から実行してもパス変換の問題は起きない。別名の machine や他の接続先は `DOCKER_HOST` を自分で設定する。
 
 ## template-web-api との違い
 
@@ -40,7 +45,7 @@ DOCKER_HOST=npipe://./pipe/podman-machine-default
 |---|---|---|
 | DB | SQLite | PostgreSQL |
 | AppHost | API のみ | PostgreSQL コンテナを含む |
-| 結合テスト | インメモリ | Testcontainers(postgres:18-alpine) |
+| 結合テスト | インメモリ | Testcontainers(postgres:18-alpine)。ランタイムが無ければスキップ |
 
 API の構造そのものは同じ。**差分は永続化層とオーケストレーションに閉じている**。
 
