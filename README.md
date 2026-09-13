@@ -32,7 +32,7 @@ AppHost が PostgreSQL コンテナを起動し、準備完了を待ってから
 
 | `TEST_CONTAINER` | 動作 |
 |---|---|
-| 未設定 | 自動検出。`DOCKER_HOST` があればそれを使い、無ければ名前付きパイプ `docker_engine` → `podman-machine-default` の順に探す。どちらも無ければスキップ |
+| 未設定 | 自動検出。`DOCKER_HOST` があればそれを使い、無ければ名前付きパイプ `docker_engine` → `podman-machine-default` の順に探す。見つかっても Testcontainers が接続できなければスキップ(machine 停止後にパイプだけ残ることがある) |
 | `docker` | Testcontainers の既定接続(Docker Desktop、または Podman の互換パイプ) |
 | `podman` | `DOCKER_HOST=npipe://./pipe/podman-machine-default` と `TESTCONTAINERS_RYUK_DISABLED=true` をテストプロセス内で設定する |
 | `none` | 実行しない(スキップ) |

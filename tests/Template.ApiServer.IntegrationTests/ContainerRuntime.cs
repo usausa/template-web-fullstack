@@ -2,12 +2,16 @@ namespace Template.ApiServer;
 
 using System.Runtime.CompilerServices;
 
+using DotNet.Testcontainers.Configurations;
+
 // 結合テストはPostgreSQLコンテナ(Testcontainers)を使う。コンテナランタイムが無い環境(CI等)では起動せずスキップする。
 // 環境変数 TEST_CONTAINER で明示できる(docker / podman / none)。未設定なら DOCKER_HOST と名前付きパイプから自動検出する
 public static class ContainerRuntime
 {
     // Podman machine既定の名前付きパイプ。別名のmachineや他の接続先はDOCKER_HOSTで指定する
     private const string PodmanEndpoint = "npipe://./pipe/podman-machine-default";
+
+    private const string NotAvailable = "コンテナランタイム(Docker / Podman)に接続できないため結合テストを実行しない。TEST_CONTAINER=docker|podman|none で明示できる";
 
     public static bool IsAvailable { get; }
 
@@ -21,19 +25,19 @@ public static class ContainerRuntime
         switch (mode)
         {
             case "DOCKER":
-                IsAvailable = true;
-                Reason = string.Empty;
                 break;
             case "PODMAN":
                 UsePodman();
-                IsAvailable = true;
-                Reason = string.Empty;
                 break;
             default:
                 IsAvailable = false;
-                Reason = "コンテナランタイム(Docker / Podman)が無いため結合テストを実行しない。TEST_CONTAINER=docker|podman で明示できる";
-                break;
+                Reason = NotAvailable;
+                return;
         }
+
+        // 名前付きパイプが残っていても応答しないことがあるため、Testcontainersが実際に接続できたかで判定する
+        IsAvailable = TestcontainersSettings.OS.DockerEndpointAuthConfig is not null;
+        Reason = IsAvailable ? string.Empty : NotAvailable;
     }
 
     // TestcontainersがDOCKER_HOSTを読む前に検出と設定を済ませる
