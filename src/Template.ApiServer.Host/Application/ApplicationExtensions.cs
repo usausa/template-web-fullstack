@@ -336,12 +336,23 @@ public static class ApplicationExtensions
             options.Providers.Add<GzipCompressionProvider>();
         });
 
+        builder.Services.AddRequestDecompression();
+
         return builder;
     }
 
     public static WebApplication UseCompression(this WebApplication app)
     {
-        app.UseResponseCompression();
+        var setting = app.Services.GetRequiredService<CompressionSetting>();
+        if (setting.Response)
+        {
+            app.UseResponseCompression();
+        }
+
+        if (setting.Request)
+        {
+            app.UseRequestDecompression();
+        }
 
         return app;
     }
@@ -541,6 +552,8 @@ public static class ApplicationExtensions
         builder.Services.AddSingleton(static p => p.GetRequiredService<IOptions<ProfilerSetting>>().Value);
         builder.Services.AddOptions<LogSetting>().BindConfiguration("Log").ValidateDataAnnotations().ValidateOnStart();
         builder.Services.AddSingleton(static p => p.GetRequiredService<IOptions<LogSetting>>().Value);
+        builder.Services.AddOptions<CompressionSetting>().BindConfiguration("Compression").ValidateDataAnnotations().ValidateOnStart();
+        builder.Services.AddSingleton(static p => p.GetRequiredService<IOptions<CompressionSetting>>().Value);
         builder.Services.AddOptions<LimitSetting>().BindConfiguration("Limit").ValidateDataAnnotations().ValidateOnStart();
         builder.Services.AddSingleton(static p => p.GetRequiredService<IOptions<LimitSetting>>().Value);
         builder.Services.AddOptions<AuthSetting>().BindConfiguration("Auth").ValidateDataAnnotations().ValidateOnStart();
