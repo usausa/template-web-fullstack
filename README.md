@@ -8,7 +8,7 @@ template-web-api を出発点にした**フルスタック構成のサンプル*
 |---|---|---|
 | API | ✅ | template-web-api と同じ構成。DB のみ PostgreSQL(Npgsql) |
 | PostgreSQL | ✅ | AppHost がコンテナとして起動し、接続文字列を API へ注入する |
-| Valkey | 未実装 | 分散キャッシュと出力キャッシュ。Redis 互換(BSD-3)。**Redis 本体はライセンス(RSAL / SSPL / AGPL)の理由で使わない** |
+| Valkey | ✅(分散キャッシュ) | AppHost がコンテナとして起動し、HybridCache の L2 として一覧の結果を保持する(下記)。出力キャッシュは未実装。Redis 互換(BSD-3)。**Redis 本体はライセンス(RSAL / SSPL / AGPL)の理由で使わない** |
 | YARP | 未実装 | 前段のリバースプロキシ |
 | フロントエンド | 未実装 | API の外側に置く要素。候補は Blazor WASM |
 
@@ -22,13 +22,23 @@ template-web-api を出発点にした**フルスタック構成のサンプル*
 dotnet run --project src/Template.ApiServer.AppHost
 ```
 
-AppHost が PostgreSQL コンテナを起動し、準備完了を待ってから API を起動する。接続文字列は `ConnectionStrings__Default` として注入され、`appsettings.json` の既定値を上書きする。
+AppHost が PostgreSQL と Valkey のコンテナを起動し、準備完了を待ってから API を起動する。接続文字列は `ConnectionStrings__Default` / `ConnectionStrings__cache` として注入され、`appsettings.json` の既定値(`localhost` の 5432 / 6379)を上書きする。Valkey のパスワードは AppHost が生成し、接続文字列に含まれる。
 
 データは名前付きボリュームへ残るため、再起動しても消えない。
 
+### キャッシュ(Valkey + HybridCache)
+
+| 層 | 登録 | 役割 |
+|---|---|---|
+| L1 | (`AddHybridCache()` が `IMemoryCache` を登録する) | プロセス内(既定 1 分)。`AddMemoryCache()` を別途書く必要はない |
+| L2 | `AddStackExchangeRedisCache()` | Valkey。複数インスタンスで共有する(既定 5 分) |
+| 窓口 | `AddHybridCache()` | `HybridCache` 1 つで L1 / L2 の読み書き・直列化・同時要求の合流を担う |
+
+使う側は `DataService` だけ。一覧(`QueryPageAsync`)を検索条件ごとのキー(`data:list:{name}:{sort}:{desc}:{page}:{size}`)でタグ `data` 付きで保持し、登録・更新・削除で `RemoveByTagAsync("data")` により一括で無効化する。パッケージ名や API 名に残る `Redis` はプロトコル名で、サーバーは Valkey。
+
 ### 結合テスト(Testcontainers)
 
-結合テストは PostgreSQL コンテナを Testcontainers で起動する。**コンテナランタイム(Docker / Podman)が無い環境では全件スキップ**され、失敗にはならない(CI 向け)。
+結合テストは PostgreSQL と Valkey(`valkey/valkey:9.1-alpine`。Redis モジュールをイメージ差し替えで流用)のコンテナを Testcontainers で起動する。**コンテナランタイム(Docker / Podman)が無い環境では全件スキップ**され、失敗にはならない(CI 向け)。
 
 | `TEST_CONTAINER` | 動作 |
 |---|---|
@@ -44,10 +54,11 @@ Podman machine を起動していれば未設定のままで動く。`DOCKER_HOS
 | 項目 | web-api | fullstack |
 |---|---|---|
 | DB | SQLite | PostgreSQL |
-| AppHost | API のみ | PostgreSQL コンテナを含む |
-| 結合テスト | インメモリ | Testcontainers(postgres:18-alpine)。ランタイムが無ければスキップ |
+| AppHost | API のみ | PostgreSQL / Valkey コンテナを含む |
+| キャッシュ | `AddMemoryCache` のみ(未使用) | HybridCache(メモリ + Valkey)で一覧をキャッシュし、更新系で無効化 |
+| 結合テスト | インメモリ | Testcontainers(postgres:18-alpine / valkey:9.1-alpine)。ランタイムが無ければスキップ |
 
-API の構造そのものは同じ。**差分は永続化層とオーケストレーションに閉じている**。
+API の構造そのものは同じ。**差分は永続化層・キャッシュとオーケストレーションに閉じている**。
 
 ## Prometheus のポート
 

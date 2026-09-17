@@ -48,6 +48,7 @@ public sealed class DataServiceTests
         services.AddSingleton<IDialect>(new DelegateDialect(static _ => false, static x => x));
         services.AddSingleton(TimeProvider.System);
         services.AddDataAccessors(typeof(DataAccessor).Assembly);
+        services.AddHybridCache();
         services.AddSingleton<DataService>();
         return services.BuildServiceProvider();
     }
