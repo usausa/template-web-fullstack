@@ -47,4 +47,20 @@ public sealed class CacheTests : IClassFixture<TestApplicationFactory>
         delete.EnsureSuccessStatusCode();
         Assert.Empty(third!.Items);
     }
+
+    [ContainerFact]
+    public async Task PublicEndpointIsServedFromOutputCache()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var first = await client.GetAsync(new Uri("/api/test/time", UriKind.Relative), TestContext.Current.CancellationToken);
+        var second = await client.GetAsync(new Uri("/api/test/time", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.False(first.Headers.Contains("Age"));
+        Assert.True(second.Headers.Contains("Age"));
+        Assert.Equal(await first.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), await second.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
 }

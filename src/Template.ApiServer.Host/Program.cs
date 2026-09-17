@@ -67,6 +67,9 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Output cache
+app.UseOutputCache();
+
 // Logging context
 app.UseLoggingContext();
 

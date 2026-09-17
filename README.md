@@ -8,7 +8,7 @@ template-web-api を出発点にした**フルスタック構成のサンプル*
 |---|---|---|
 | API | ✅ | template-web-api と同じ構成。DB のみ PostgreSQL(Npgsql) |
 | PostgreSQL | ✅ | AppHost がコンテナとして起動し、接続文字列を API へ注入する |
-| Valkey | ✅(分散キャッシュ) | AppHost がコンテナとして起動し、HybridCache の L2 として一覧の結果を保持する(下記)。出力キャッシュは未実装。Redis 互換(BSD-3)。**Redis 本体はライセンス(RSAL / SSPL / AGPL)の理由で使わない** |
+| Valkey | ✅ | AppHost がコンテナとして起動。HybridCache の L2 と出力キャッシュの保管先(下記)。Redis 互換(BSD-3)。**Redis 本体はライセンス(RSAL / SSPL / AGPL)の理由で使わない** |
 | YARP | 未実装 | 前段のリバースプロキシ |
 | フロントエンド | 未実装 | API の外側に置く要素。候補は Blazor WASM |
 
@@ -36,6 +36,10 @@ AppHost が PostgreSQL と Valkey のコンテナを起動し、準備完了を�
 
 使う側は `DataService` だけ。一覧(`QueryPageAsync`)を検索条件ごとのキー(`data:list:{name}:{sort}:{desc}:{page}:{size}`)でタグ `data` 付きで保持し、登録・更新・削除で `RemoveByTagAsync("data")` により一括で無効化する。パッケージ名や API 名に残る `Redis` はプロトコル名で、サーバーは Valkey。
 
+### 出力キャッシュ(Valkey)
+
+`AddOutputCache` + `AddStackExchangeRedisOutputCache` で応答そのものを Valkey に保持する(`app.UseOutputCache()` は認可の後)。付けるのは**認証なしの公開エンドポイントだけ**(`/api/test/time` に `CacheOutput(CachePolicies.Public)`、30 秒)。認証付きのエンドポイントに素朴に付けると利用者間で応答が混ざるため、既定ポリシーは `Authorization` ヘッダー付きの要求と `Set-Cookie` 付きの応答を保存しない。キャッシュから返った応答には `Age` ヘッダーが付く。
+
 ### 結合テスト(Testcontainers)
 
 結合テストは PostgreSQL と Valkey(`valkey/valkey:9.1-alpine`。Redis モジュールをイメージ差し替えで流用)のコンテナを Testcontainers で起動する。**コンテナランタイム(Docker / Podman)が無い環境では全件スキップ**され、失敗にはならない(CI 向け)。
@@ -55,7 +59,7 @@ Podman machine を起動していれば未設定のままで動く。`DOCKER_HOS
 |---|---|---|
 | DB | SQLite | PostgreSQL |
 | AppHost | API のみ | PostgreSQL / Valkey コンテナを含む |
-| キャッシュ | `AddMemoryCache` のみ(未使用) | HybridCache(メモリ + Valkey)で一覧をキャッシュし、更新系で無効化 |
+| キャッシュ | `AddMemoryCache` のみ(未使用) | HybridCache(メモリ + Valkey)で一覧をキャッシュし、更新系で無効化。公開エンドポイントの出力キャッシュも Valkey |
 | 結合テスト | インメモリ | Testcontainers(postgres:18-alpine / valkey:9.1-alpine)。ランタイムが無ければスキップ |
 
 API の構造そのものは同じ。**差分は永続化層・キャッシュとオーケストレーションに閉じている**。

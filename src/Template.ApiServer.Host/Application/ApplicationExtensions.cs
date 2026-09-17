@@ -86,6 +86,7 @@ public static class ApplicationExtensions
 
     public static IHostApplicationBuilder ConfigureLogging(this IHostApplicationBuilder builder)
     {
+        var setting = builder.Configuration.GetSection("Log").Get<LogSetting>()!;
         var useOtlpExporter = builder.Configuration.IsOtelExporterEnabled();
 
         // Application log
@@ -94,18 +95,42 @@ public static class ApplicationExtensions
             options =>
             {
                 options.ReadFrom.Configuration(builder.Configuration);
+                options.Enrich.With(new CallbackEnricher("RemoteIpAddress", static () => LoggingContext.RemoteIpAddress));
                 options.Enrich.With(new CallbackEnricher("UserId", static () => LoggingContext.UserId));
             },
             writeToProviders: useOtlpExporter);
 
         // HTTP log
-        builder.Services.AddHttpLogging(static options =>
+        builder.Services.AddHttpLogging(options =>
         {
             options.LoggingFields = HttpLoggingFields.RequestMethod |
                                     HttpLoggingFields.RequestPath |
                                     HttpLoggingFields.ResponseStatusCode |
                                     HttpLoggingFields.Duration;
+            if (setting.HttpDump)
+            {
+                options.LoggingFields |= HttpLoggingFields.RequestBody | HttpLoggingFields.ResponseBody;
+                options.CombineLogs = true;
+                options.RequestBodyLogLimit = setting.HttpDumpLimit;
+                options.ResponseBodyLogLimit = setting.HttpDumpLimit;
+                options.MediaTypeOptions.Clear();
+                options.MediaTypeOptions.AddText("application/json");
+                options.MediaTypeOptions.AddText("application/*+json");
+                options.MediaTypeOptions.AddText("application/xml");
+                options.MediaTypeOptions.AddText("application/*+xml");
+            }
         });
+
+        // Access log (W3C)
+        if (setting.W3CLog.Enable)
+        {
+            builder.Services.AddW3CLogging(options =>
+            {
+                options.LogDirectory = setting.W3CLog.Directory;
+                options.FileName = setting.W3CLog.FileName;
+                options.RetainedFileCountLimit = setting.W3CLog.RetainedFileCount;
+            });
+        }
 
         return builder;
     }
@@ -113,6 +138,11 @@ public static class ApplicationExtensions
     public static WebApplication UseLogging(this WebApplication app)
     {
         var setting = app.Services.GetRequiredService<LogSetting>();
+        if (setting.W3CLog.Enable)
+        {
+            app.UseW3CLogging();
+        }
+
         if (setting.HttpLog)
         {
             app.UseHttpLogging();
@@ -123,11 +153,7 @@ public static class ApplicationExtensions
 
     public static WebApplication UseLoggingContext(this WebApplication app)
     {
-        app.Use(static (context, next) =>
-        {
-            LoggingContext.UserId = context.User.Identity?.Name;
-            return next(context);
-        });
+        app.UseMiddleware<LoggingContextMiddleware>();
 
         return app;
     }
@@ -486,6 +512,17 @@ public static class ApplicationExtensions
             options.Configuration = builder.Configuration.GetConnectionString("Cache");
         });
         builder.Services.AddHybridCache();
+
+        // Output cache
+        builder.Services.AddOutputCache(static options =>
+        {
+            // 認証なしの公開エンドポイント用。既定ポリシーはAuthorizationヘッダー付きの要求とSet-Cookie付きの応答を保存しない
+            options.AddPolicy(CachePolicies.Public, static policy => policy.Expire(TimeSpan.FromSeconds(30)));
+        });
+        builder.Services.AddStackExchangeRedisOutputCache(options =>
+        {
+            options.Configuration = builder.Configuration.GetConnectionString("Cache");
+        });
 
         // Storage
         builder.Services.AddOptions<FileStorageOptions>().BindConfiguration("Storage").ValidateDataAnnotations().ValidateOnStart();

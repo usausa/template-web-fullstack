@@ -16,7 +16,7 @@ public static class TestEndpoints
     {
         var group = app.MapApiGroup(ApiRoutes.Test);
 
-        group.MapGet("/time", HandleTime);
+        group.MapGet("/time", HandleTime).CacheOutput(CachePolicies.Public);
         group.MapGet("/feature", HandleFeatureAsync);
         group.MapGet("/error", HandleError);
         group.MapGet("/me", HandleMe)
