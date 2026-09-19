@@ -9,7 +9,7 @@ template-web-api を出発点にした**フルスタック構成のサンプル*
 | API | ✅ | template-web-api と同じ構成。DB のみ PostgreSQL(Npgsql) |
 | PostgreSQL | ✅ | AppHost がコンテナとして起動し、接続文字列を API へ注入する |
 | Valkey | ✅ | AppHost がコンテナとして起動。HybridCache の L2 と出力キャッシュの保管先(下記)。Redis 互換(BSD-3)。**Redis 本体はライセンス(RSAL / SSPL / AGPL)の理由で使わない** |
-| YARP | 未実装 | 前段のリバースプロキシ |
+| YARP | ✅ | AppHost がコンテナ(`Aspire.Hosting.Yarp`)として起動する前段のリバースプロキシ。`/api/*` を API へ振り分ける(下記) |
 | フロントエンド | 未実装 | API の外側に置く要素。候補は Blazor WASM |
 
 未実装分の計画は [tmpl-plan-fullstack.md](../tmpl-plan-fullstack.md)。
@@ -25,6 +25,18 @@ dotnet run --project src/Template.ApiServer.AppHost
 AppHost が PostgreSQL と Valkey のコンテナを起動し、準備完了を待ってから API を起動する。接続文字列は `ConnectionStrings__Default` / `ConnectionStrings__cache` として注入され、`appsettings.json` の既定値(`localhost` の 5432 / 6379)を上書きする。Valkey のパスワードは AppHost が生成し、接続文字列に含まれる。
 
 データは名前付きボリュームへ残るため、再起動しても消えない。
+
+### 前段プロキシ(YARP)
+
+`gateway` リソースが YARP のコンテナ(`mcr.microsoft.com/dotnet/nightly/yarp`)で、API の準備完了を待ってから起動する。プロジェクトは増やさず、経路は AppHost の `WithConfiguration` で書く。
+
+```csharp
+builder.AddYarp("gateway")
+    .WithConfiguration(yarp => yarp.AddRoute("/api/{**catch-all}", apiserver))
+    .WaitFor(apiserver);
+```
+
+`/api/*` だけを API へ転送する(`/health` や `/swagger` は API 直接)。gateway のホスト側ポートはダッシュボードで確認する。フロントエンド等を足す場合は `AddRoute` を追加し、経路で振り分ける。レート制限やカスタムミドルウェアが要る場合は YARP をプロジェクト化する(`src/Template.ApiServer.Gateway`)。
 
 ### キャッシュ(Valkey + HybridCache)
 
@@ -58,7 +70,7 @@ Podman machine を起動していれば未設定のままで動く。`DOCKER_HOS
 | 項目 | web-api | fullstack |
 |---|---|---|
 | DB | SQLite | PostgreSQL |
-| AppHost | API のみ | PostgreSQL / Valkey コンテナを含む |
+| AppHost | API のみ | PostgreSQL / Valkey / YARP(gateway)コンテナを含む |
 | キャッシュ | `AddMemoryCache` のみ(未使用) | HybridCache(メモリ + Valkey)で一覧をキャッシュし、更新系で無効化。公開エンドポイントの出力キャッシュも Valkey |
 | 結合テスト | インメモリ | Testcontainers(postgres:18-alpine / valkey:9.1-alpine)。ランタイムが無ければスキップ |
 
