@@ -50,7 +50,7 @@ builder.AddYarp("gateway")
 
 ### 出力キャッシュ(Valkey)
 
-`AddOutputCache` + `AddStackExchangeRedisOutputCache` で応答そのものを Valkey に保持する(`app.UseOutputCache()` は認可の後)。付けるのは**認証なしの公開エンドポイントだけ**(`/api/test/time` に `CacheOutput(CachePolicies.Public)`、30 秒)。認証付きのエンドポイントに素朴に付けると利用者間で応答が混ざるため、既定ポリシーは `Authorization` ヘッダー付きの要求と `Set-Cookie` 付きの応答を保存しない。キャッシュから返った応答には `Age` ヘッダーが付く。
+`AddOutputCache` + `AddStackExchangeRedisOutputCache` で応答そのものを Valkey に保持する(`app.UseOutputCache()` は認可の後)。付けるのは**認証なしの公開エンドポイントだけ**(`/api/v1/test/time` に `CacheOutput(CachePolicies.Public)`、30 秒)。認証付きのエンドポイントに素朴に付けると利用者間で応答が混ざるため、既定ポリシーは `Authorization` ヘッダー付きの要求と `Set-Cookie` 付きの応答を保存しない。キャッシュから返った応答には `Age` ヘッダーが付く。
 
 ### 結合テスト(Testcontainers)
 
