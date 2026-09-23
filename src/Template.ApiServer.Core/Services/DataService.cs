@@ -3,24 +3,15 @@ namespace Template.ApiServer.Services;
 using Microsoft.Extensions.Caching.Hybrid;
 
 using Template.ApiServer.Accessors;
-using Template.ApiServer.Infrastructure.Data;
 using Template.ApiServer.Models;
 using Template.ApiServer.Models.Entity;
 
 public sealed class DataService
 {
-    // 並べ替えに使える列。SqlHelper.NormalizeSortがこの集合以外を弾く
-    private static readonly string[] SortKeys = ["Name", "Value", "CreatedAt"];
-
-    // 一致しなかったときの並び順。テーブルの主キー
-    private const string DefaultSortColumn = "Id";
-
     // 一覧の結果はHybridCache(メモリ + Valkey)に載せ、更新系でタグごと無効化する。有効期限はHybridCacheの既定(L2は5分、L1は1分)
     private const string CacheTag = "data";
 
     private static readonly string[] CacheTags = [CacheTag];
-
-    private readonly TimeProvider timeProvider;
 
     private readonly HybridCache cache;
 
@@ -28,58 +19,57 @@ public sealed class DataService
 
     private readonly DataAccessor dataAccessor;
 
+    private readonly ServiceContextProvider contextProvider;
+
     public DataService(
-        TimeProvider timeProvider,
         HybridCache cache,
         IDialect dialect,
-        DataAccessor dataAccessor)
+        DataAccessor dataAccessor,
+        ServiceContextProvider contextProvider)
     {
-        this.timeProvider = timeProvider;
         this.cache = cache;
         this.dialect = dialect;
         this.dataAccessor = dataAccessor;
+        this.contextProvider = contextProvider;
     }
 
-    public void CreateTable() =>
-        dataAccessor.Create();
-
     public ValueTask<int> CountAsync(string? name, CancellationToken cancellationToken = default) =>
-        dataAccessor.CountAsync(name, cancellationToken);
+        dataAccessor.CountAsync(dialect.Match(name), cancellationToken);
 
-    // ページ番号と件数で扱い、総件数と合わせて返す。検索条件ごとにキャッシュする
-    public ValueTask<PagedResult<DataEntity>> QueryPageAsync(string? name, string? sort, bool desc, int page, int size, CancellationToken cancellationToken = default) =>
+    // 検索条件ごとにキャッシュする
+    public ValueTask<PagedResult<DataEntity>> QueryPageAsync(string? name, DataSort sort, bool desc, int page, int size, CancellationToken cancellationToken = default) =>
         cache.GetOrCreateAsync(
             $"data:list:{name}:{sort}:{desc}:{page}:{size}",
             ct => QueryPageCoreAsync(name, sort, desc, page, size, ct),
             tags: CacheTags,
             cancellationToken: cancellationToken);
 
-    private async ValueTask<PagedResult<DataEntity>> QueryPageCoreAsync(string? name, string? sort, bool desc, int page, int size, CancellationToken cancellationToken)
+    private async ValueTask<PagedResult<DataEntity>> QueryPageCoreAsync(string? name, DataSort sort, bool desc, int page, int size, CancellationToken cancellationToken)
     {
-        var total = await dataAccessor.CountAsync(name, cancellationToken);
-        var items = await dataAccessor.QueryPageAsync(name, SqlHelper.NormalizeSort(SortKeys, DefaultSortColumn, sort, desc), page * size, size, cancellationToken);
+        var pattern = dialect.Match(name);
+        var total = await dataAccessor.CountAsync(pattern, cancellationToken);
+        var items = await dataAccessor.QueryPageAsync(pattern, sort, desc, size, page * size, cancellationToken);
         return new PagedResult<DataEntity>(total, page, size, items);
     }
 
     public ValueTask<DataEntity?> QueryAsync(long id) =>
         dataAccessor.QueryAsync(id);
 
-    public async ValueTask<long?> InsertAsync(string name, int value)
+    public async ValueTask<DataWriteStatus> InsertAsync(DataEntity entity)
     {
+        var context = contextProvider.Current;
+
         try
         {
-            var id = await dataAccessor.InsertAsync(name, value, timeProvider.GetLocalNow().DateTime);
+            entity.CreatedAt = context.Now.DateTime;
+            entity.Version = 1;
+            entity.Id = await dataAccessor.InsertAsync(entity.Name, entity.Value, entity.CreatedAt);
             await cache.RemoveByTagAsync(CacheTag);
-            return id;
+            return DataWriteStatus.Success;
         }
-        catch (DbException ex)
+        catch (DbException ex) when (dialect.IsDuplicate(ex))
         {
-            if (dialect.IsDuplicate(ex))
-            {
-                return null;
-            }
-
-            throw;
+            return DataWriteStatus.Duplicate;
         }
     }
 
@@ -99,26 +89,20 @@ public sealed class DataService
             var exists = version.HasValue && await dataAccessor.QueryAsync(id) is not null;
             return new DataUpdateResult(exists ? DataWriteStatus.VersionMismatch : DataWriteStatus.NotFound, 0);
         }
-        catch (DbException ex)
+        catch (DbException ex) when (dialect.IsDuplicate(ex))
         {
-            if (dialect.IsDuplicate(ex))
-            {
-                return new DataUpdateResult(DataWriteStatus.Duplicate, 0);
-            }
-
-            throw;
+            return new DataUpdateResult(DataWriteStatus.Duplicate, 0);
         }
     }
 
-    public async ValueTask<bool> DeleteAsync(long id)
+    public async ValueTask<DataWriteStatus> DeleteAsync(long id)
     {
-        var rows = await dataAccessor.DeleteAsync(id);
-        if (rows > 0)
+        if (await dataAccessor.DeleteAsync(id) > 0)
         {
             await cache.RemoveByTagAsync(CacheTag);
-            return true;
+            return DataWriteStatus.Success;
         }
 
-        return false;
+        return DataWriteStatus.NotFound;
     }
 }
