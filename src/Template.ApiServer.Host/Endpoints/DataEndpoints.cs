@@ -33,7 +33,7 @@ public sealed class DataListResponse
     public IReadOnlyList<DataListEntry> Items { get; set; } = default!;
 }
 
-public sealed class DataResponse
+public sealed class DataGetResponse
 {
     public long Id { get; set; }
 
@@ -81,7 +81,7 @@ public static partial class DataMapper
     public static partial DataListEntry ToListEntry(this DataEntity entity);
 
     [Mapper]
-    public static partial DataResponse ToResponse(this DataEntity entity);
+    public static partial DataGetResponse ToGetResponse(this DataEntity entity);
 }
 
 //--------------------------------------------------------------------------------
@@ -97,13 +97,35 @@ public static class DataEndpoints
     public static void MapDataEndpoints(this WebApplication app)
     {
         var group = app.MapApiGroup(ApiRoutes.Data)
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        group.MapGet("/", HandleListAsync);
-        group.MapGet("/{id:long}", HandleGetAsync);
-        group.MapPost("/", HandleCreateAsync);
-        group.MapPut("/{id:long}", HandleUpdateAsync);
-        group.MapDelete("/{id:long}", HandleDeleteAsync).RequireAuthorization(Policies.Administrator);
+        group.MapGet("/", HandleListAsync)
+            .WithName("DataList")
+            .Produces<DataListResponse>()
+            .ProducesValidationProblem();
+        group.MapGet("/{id:long}", HandleGetAsync)
+            .WithName("DataGet")
+            .Produces<DataGetResponse>()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+        group.MapPost("/", HandleCreateAsync)
+            .WithName("DataCreate")
+            .Produces<DataCreateResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        group.MapPut("/{id:long}", HandleUpdateAsync)
+            .WithName("DataUpdate")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status412PreconditionFailed);
+        group.MapDelete("/{id:long}", HandleDeleteAsync)
+            .RequireAuthorization(Policies.Administrator)
+            .WithName("DataDelete")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     //--------------------------------------------------------------------------------
@@ -145,7 +167,7 @@ public static class DataEndpoints
         }
 
         response.Headers.ETag = EntityTag.From(entity.Version);
-        return TypedResults.Ok(entity.ToResponse());
+        return TypedResults.Ok(entity.ToGetResponse());
     }
 
     //--------------------------------------------------------------------------------

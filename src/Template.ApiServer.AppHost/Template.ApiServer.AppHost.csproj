@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.1">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,13 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.5.4" />
-    <PackageReference Include="Aspire.Hosting.Valkey" Version="13.5.4" />
-    <PackageReference Include="Aspire.Hosting.Yarp" Version="13.5.4" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.1" />
+    <PackageReference Include="Aspire.Hosting.Valkey" Version="13.6.1" />
+    <PackageReference Include="Aspire.Hosting.Yarp" Version="13.6.1" />
+    <!-- Transitive pin: GHSA-qhrr-8q5h-9q3h -->
+    <PackageReference Include="MessagePack" Version="2.5.307" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Template.ApiServer.Host\Template.ApiServer.Host.csproj" />
+    <ProjectReference Include="..\Template.ApiServer.Initializer\Template.ApiServer.Initializer.csproj" />
   </ItemGroup>
 
 </Project>

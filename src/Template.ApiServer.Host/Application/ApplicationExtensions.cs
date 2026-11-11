@@ -217,6 +217,9 @@ public static class ApplicationExtensions
             options.SerializerOptions.DictionaryKeyPolicy = NamingPolicy.JsonDictionaryKeyNaming;
             options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.SerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
+            options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+            options.SerializerOptions.AllowDuplicateProperties = false;
+            options.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
         });
 
         // Validation
@@ -580,6 +583,8 @@ public static class ApplicationExtensions
         builder.Services.AddSingleton(static p => p.GetRequiredService<IOptions<AuthSetting>>().Value);
         builder.Services.AddOptions<TelemetrySetting>().BindConfiguration("Telemetry").ValidateDataAnnotations().ValidateOnStart();
         builder.Services.AddSingleton(static p => p.GetRequiredService<IOptions<TelemetrySetting>>().Value);
+        builder.Services.AddOptions<DatabaseSetting>().BindConfiguration("Database").ValidateDataAnnotations().ValidateOnStart();
+        builder.Services.AddSingleton(static p => p.GetRequiredService<IOptions<DatabaseSetting>>().Value);
 
         return builder;
     }
@@ -661,7 +666,9 @@ public static class ApplicationExtensions
         Directory.CreateDirectory(app.Services.GetRequiredService<FileStorageOption>().Root);
 
         // Prepare database (schema from the SQL file)
-        return app.Services.GetRequiredService<DatabaseService>().InitializeAsync(SchemaPath, CancellationToken.None);
+        return app.Services.GetRequiredService<DatabaseSetting>().Initialize
+            ? app.Services.GetRequiredService<DatabaseService>().InitializeAsync(SchemaPath, CancellationToken.None)
+            : ValueTask.CompletedTask;
     }
 
     //--------------------------------------------------------------------------------

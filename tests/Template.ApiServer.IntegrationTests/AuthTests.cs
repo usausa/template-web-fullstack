@@ -1,6 +1,7 @@
 namespace Template.ApiServer;
 
 using System.Net.Http.Headers;
+using System.Text;
 
 using Template.ApiServer.Host.Endpoints;
 
@@ -27,8 +28,8 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
         var client = factory.CreateClient();
 
         // Act
-        var response = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new LoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
-        var body = await response.Content.ReadFromJsonAsync<LoginResponse>(TestContext.Current.CancellationToken);
+        var response = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new AuthLoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadFromJsonAsync<AuthLoginResponse>(TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -43,7 +44,7 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
         var client = factory.CreateClient();
 
         // Act
-        var response = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new LoginRequest { Id = "test", Password = "wrong" }, TestContext.Current.CancellationToken);
+        var response = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new AuthLoginRequest { Id = "test", Password = "wrong" }, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -54,8 +55,8 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
     {
         // Arrange
         var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new LoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
-        var token = (await login.Content.ReadFromJsonAsync<LoginResponse>(TestContext.Current.CancellationToken))!.Token;
+        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new AuthLoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
+        var token = (await login.Content.ReadFromJsonAsync<AuthLoginResponse>(TestContext.Current.CancellationToken))!.Token;
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -93,8 +94,8 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
     {
         // Arrange
         var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new LoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
-        var token = (await login.Content.ReadFromJsonAsync<LoginResponse>(TestContext.Current.CancellationToken))!.Token;
+        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new AuthLoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
+        var token = (await login.Content.ReadFromJsonAsync<AuthLoginResponse>(TestContext.Current.CancellationToken))!.Token;
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -104,13 +105,35 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [ContainerTheory]
+    [InlineData("{")]
+    [InlineData("""{"name":"JsonItem","value":"1"}""")]
+    [InlineData("""{"name":"JsonItem","name":"JsonItem","value":1}""")]
+    [InlineData("""{"name":"JsonItem","value":1,"ownerId":"other"}""")]
+    public async Task CreateWithInvalidJsonReturnsBadRequest(string body)
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new AuthLoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
+        var token = (await login.Content.ReadFromJsonAsync<AuthLoginResponse>(TestContext.Current.CancellationToken))!.Token;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using var content = new StringContent(body, Encoding.UTF8, "application/json");
+
+        // Act
+        var response = await client.PostAsync(new Uri("/api/v1/data", UriKind.Relative), content, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
     [ContainerFact]
     public async Task DataApiRejectsStaleVersion()
     {
         // Arrange
         var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new LoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
-        var token = (await login.Content.ReadFromJsonAsync<LoginResponse>(TestContext.Current.CancellationToken))!.Token;
+        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new AuthLoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
+        var token = (await login.Content.ReadFromJsonAsync<AuthLoginResponse>(TestContext.Current.CancellationToken))!.Token;
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         var create = await client.PostAsJsonAsync(new Uri("/api/v1/data", UriKind.Relative), new DataCreateRequest { Name = "VersionItem", Value = 1 }, TestContext.Current.CancellationToken);
         var id = (await create.Content.ReadFromJsonAsync<DataCreateResponse>(TestContext.Current.CancellationToken))!.Id;
@@ -133,7 +156,7 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
 
         // If-Match なし → 無条件に更新
         var unconditional = await client.PutAsJsonAsync(new Uri($"/api/v1/data/{id}", UriKind.Relative), new DataUpdateRequest { Name = "VersionItem", Value = 4 }, TestContext.Current.CancellationToken);
-        var latest = await client.GetFromJsonAsync<DataResponse>(new Uri($"/api/v1/data/{id}", UriKind.Relative), TestContext.Current.CancellationToken);
+        var latest = await client.GetFromJsonAsync<DataGetResponse>(new Uri($"/api/v1/data/{id}", UriKind.Relative), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("\"1\"", etag);
@@ -151,8 +174,8 @@ public sealed class AuthTests : IClassFixture<TestApplicationFactory>
     {
         // Arrange
         var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new LoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
-        var token = (await login.Content.ReadFromJsonAsync<LoginResponse>(TestContext.Current.CancellationToken))!.Token;
+        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new AuthLoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
+        var token = (await login.Content.ReadFromJsonAsync<AuthLoginResponse>(TestContext.Current.CancellationToken))!.Token;
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // 登録順とName順・Value順がいずれも異なるように積む

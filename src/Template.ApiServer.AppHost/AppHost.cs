@@ -2,17 +2,23 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("postgres")
-    .WithDataVolume();
+    .WithDataVolume()
+    .WithPgWeb();
 var database = postgres.AddDatabase("template");
 
 var cache = builder.AddValkey("cache")
     .WithDataVolume();
 
+var initializer = builder.AddProject<Projects.Template_ApiServer_Initializer>("initializer")
+    .WithReference(database, connectionName: "Default")
+    .WaitFor(database);
+
 // 接続文字列はConnectionStrings__Default / ConnectionStrings__cacheとして注入され、appsettingsの既定値を上書きする
 var apiserver = builder.AddProject<Projects.Template_ApiServer_Host>("apiserver")
     .WithReference(database, connectionName: "Default")
     .WithReference(cache)
-    .WaitFor(database)
+    .WithEnvironment("Database__Initialize", "false")
+    .WaitForCompletion(initializer)
     .WaitFor(cache)
     .WithHttpHealthCheck("/health");
 

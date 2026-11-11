@@ -22,8 +22,8 @@ public sealed class CacheTests : IClassFixture<TestApplicationFactory>
     {
         // Arrange
         var client = factory.CreateClient();
-        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new LoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
-        var token = (await login.Content.ReadFromJsonAsync<LoginResponse>(TestContext.Current.CancellationToken))!.Token;
+        var login = await client.PostAsJsonAsync(new Uri("/api/v1/auth/login", UriKind.Relative), new AuthLoginRequest { Id = "test", Password = "test" }, TestContext.Current.CancellationToken);
+        var token = (await login.Content.ReadFromJsonAsync<AuthLoginResponse>(TestContext.Current.CancellationToken))!.Token;
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var create = await client.PostAsJsonAsync(new Uri("/api/v1/data", UriKind.Relative), new DataCreateRequest { Name = "CacheItem", Value = 1 }, TestContext.Current.CancellationToken);

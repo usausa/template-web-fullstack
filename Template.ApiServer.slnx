@@ -5,6 +5,7 @@
   <Folder Name="/Backend/">
     <Project Path="src/Template.ApiServer.Core/Template.ApiServer.Core.csproj" />
     <Project Path="src/Template.ApiServer.Host/Template.ApiServer.Host.csproj" />
+    <Project Path="src/Template.ApiServer.Initializer/Template.ApiServer.Initializer.csproj" />
   </Folder>
   <Folder Name="/Test/">
     <Project Path="tests/Template.ApiServer.UnitTests/Template.ApiServer.UnitTests.csproj" />
